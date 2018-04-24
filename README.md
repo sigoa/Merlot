@@ -1,4 +1,4 @@
-[wiki](https://github.com/sigoa/build-system/wiki) --- [Merlot] (https://sigoa.github.io/build-system/)
+[wiki](https://github.com/sigoa/build-system/wiki) --- [Merlot](https://sigoa.github.io/build-system/)
 
 
 to build your own "heads" distro
