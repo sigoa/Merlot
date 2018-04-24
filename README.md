@@ -2,17 +2,4 @@
 
 ***
 
-to build your own Linux distro
-==============================
-please clone the git repository by typing in a bash shell:
-
-```
-git clone https://github.com/headslive/build-system.git --recursive
-```
-
-then
-----
-
-go to the `live-sdk` directory and modify stuff.
-
-see [live-sdk documentation](https://git.devuan.org/sdk/live-sdk)
+Bottled GNU/Linux for connaisseurs only.
