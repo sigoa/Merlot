@@ -1,0 +1,224 @@
+#!/usr/bin/env zsh
+# Copyright (c) 2016-2017 Dyne.org Foundation
+# libdevuansdk maintained by Ivan J. <parazyd@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+vars+=(bootstrap_tgz_stage3 bootstrap_tgz_stage4 TAR_STAGE4)
+arrs+=(base_packages_option core_packages_option extra_packages_option)
+arrs+=(purge_packages_option)
+
+bootstrap_complete_base() {
+	fn bootstrap_complete_base "$@"
+	req=(arch)
+	ckreq || return 1
+
+	notice "bootstrapping $os $arch base"
+
+	export LANG=C
+	export LC_ALL=C
+	export DEBIAN_FRONTEND=noninteractive
+
+	bootstrap_tgz_stage3="$R/tmp/bootstrap-${os}-${arch}-stage3.tgz"
+	bootstrap_tgz_stage4="$R/tmp/bootstrap-${os}-${arch}-stage4.tgz"
+
+	if [[ -n "$TAR_STAGE4" && -f "$bootstrap_tgz_stage4" ]]; then
+		notice "using the existing stage4 bootstrap tarball found in $R/tmp"
+		bootstrap_tar_unpack "$bootstrap_tgz_stage4" "$strapdir" || {
+			die "failed to extract tarball"
+			zerr
+		}
+		return
+	elif [[ -f "$bootstrap_tgz_stage3" ]]; then
+		notice "using the existing stage3 bootstrap tarball found in $R/tmp"
+		bootstrap_tar_unpack "$bootstrap_tgz_stage3" "$strapdir" || {
+			die "failed to extract tarball"
+			zerr
+		}
+		return
+	fi
+
+	notice "running debootstrap stage 1"
+
+	sudo DEBOOTSTRAP_DIR="$LIBPATH/extra/debootstrap" "$LIBPATH/extra/debootstrap/debootstrap" \
+		--keyring="$LIBPATH/extra/devuan-keyring/keyrings/devuan-archive-keyring.gpg" \
+		--foreign \
+		--arch $arch $release $strapdir $mirror || zerr
+
+	[[ $arch =~ "^arm.." ]] && { qemu_install_user || zerr }
+
+	sudo mkdir -p $strapdir/tmp
+	sudo chmod 1777 $strapdir/tmp
+
+	## debootstrap stage 2
+	notice "running debootstrap stage 2"
+	sudo chroot $strapdir \
+		/debootstrap/debootstrap --second-stage || zerr
+
+	## write all system configuration
+	notice "writing system configuration"
+	conf_print_debconf     | sudo tee $strapdir/debconf.set              >/dev/null
+	conf_print_fstab       | sudo tee $strapdir/etc/fstab                >/dev/null
+	conf_print_hostname    | sudo tee $strapdir/etc/hostname             >/dev/null
+	conf_print_hosts       | sudo tee $strapdir/etc/hosts                >/dev/null
+	conf_print_netifaces   | sudo tee $strapdir/etc/network/interfaces   >/dev/null
+	conf_print_resolvconf  | sudo tee $strapdir/etc/resolv.conf          >/dev/null
+	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list     >/dev/null
+	#conf_print_locales     | sudo tee $strapdir/etc/profile.d/locales.sh >/dev/null
+
+	## write third-stage for chroot
+	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage >/dev/null
+
+	## chroot into it and configure further
+	## debootstrap stage 3
+	notice "running debootstrap stage 3"
+
+
+	chroot-script -d thirdstage || zerr
+
+	[[ $APT_CACHE = 1 ]] && {
+		notice "adding apt cache gpg pubkey"
+		cat <<EOF | sudo tee ${strapdir}/addcachepubkey >/dev/null
+#!/bin/sh
+gpgkey="$(gpg --export -a $aptcachegpg)"
+printf "%s" "\$gpgkey" | apt-key add -
+EOF
+		chroot-script addcachepubkey || zerr
+	}
+
+	if [[ -n "$TAR_STAGE4" ]]; then
+		bootstrap_tar_pack   "$bootstrap_tgz_stage3"             || zerr
+		bootstrap_tar_unpack "$bootstrap_tgz_stage4" "$strapdir" || zerr
+	else
+		bootstrap_tar_pack   "$bootstrap_tgz_stage3"             || zerr
+		bootstrap_tar_unpack "$bootstrap_tgz_stage3" "$strapdir" || zerr
+	fi
+}
+
+bootstrap_config_thirdstage() {
+	fn bootstrap_config_thirdstage
+	req=(core_packages base_packages)
+	ckreq || return 1
+
+	cat << EOF
+#!/bin/sh
+apt-get update
+debconf-set-selections /debconf.set
+
+echo "${rootcredentials}" | chpasswd
+sed -i -e 's/KERNEL\!=\"eth\*|/KERNEL\!=\"/' \
+	/lib/udev/rules.d/75-persistent-net-generator.rules
+rm -f /etc/udev/rules.d/70-persistent-net.rules
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get --yes --force-yes install ${core_packages_option} ${core_packages}
+apt-get --yes --force-yes install ${base_packages_option} ${base_packages}
+apt-get --yes --force-yes purge  ${purge_packages_option} ${purge_packages}
+apt-get --yes --force-yes autoremove
+
+apt-get clean
+
+sed -e 's/# en_US.UTF-8/en_US.UTF-8/' -i /etc/locale.gen
+locale-gen
+
+rm -f /debconf.set
+rm -f /etc/ssh/ssh_host_*
+rm -f /root/.bash_history
+#echo "1" > .keep
+EOF
+}
+
+bootstrap_tar_pack() {
+	fn bootstrap_tar_pack
+	req=(bootstrap_tgz)
+	bootstrap_tgz="$1"
+	ckreq || return 1
+
+	local _dest="$(dirname $bootstrap_tgz)"
+
+	if [[ -f "$bootstrap_tgz" ]]; then
+		notice "tarball found already in $_dest"
+	else
+		notice "Creating boostrap tarball in $bootstrap_tgz"
+		silly
+
+		pushd ${strapdir}
+		mkdir -p ${_dest}
+		silly
+		sudo tar czfp $bootstrap_tgz \
+			--exclude={./boot,./dev,./sys,./proc} .
+		popd
+	fi
+}
+
+bootstrap_tar_unpack() {
+	fn bootstrap_tar_unpack $@
+	local bootstrap_tgz="$1"
+	req=(strapdir bootstrap_tgz)
+	ckreq || return 1
+
+	[[ -n "$TAR_STAGE4" ]] && {
+		[[ -f "$bootstrap_tgz" ]] || bootstrap_tgz="$bootstrap_tgz_stage3"
+	}
+	sudo rm -rf "${strapdir}"/*
+	silly
+	sudo tar xfp $bootstrap_tgz -C ${strapdir}
+	sudo mkdir -p ${strapdir}/{boot,dev,sys,proc}
+
+	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list >/dev/null
+
+	cat <<EOF | sudo tee ${strapdir}/postunpack >/dev/null
+#!/bin/sh
+apt-get update
+
+## check if all our extra_packages exist
+allpkgs="\$(apt-cache search '.' | cut -d' ' -f1)"
+for i in ${extra_packages} ; do
+	printf "%s" "\$allpkgs" | grep -q "^\$i$" || {
+		case "\$i" in
+			--*) continue ;;
+			*)   missing="\$missing \$i" ;;
+		esac
+	}
+done
+
+[ -n "\$missing" ] && {
+	printf "\033[1;31m[!!] some extra packages don't exist\033[0m\n"
+	printf "%s\n" "\$missing"
+	exit 1
+}
+
+apt-get --yes --force-yes upgrade
+apt-get --yes --force-yes install ${extra_packages_option} ${extra_packages}
+apt-get --yes --force-yes autoremove
+
+apt-get clean
+EOF
+
+	chroot-script -d postunpack || zerr
+
+	for i in $inittab; do
+		grep -q "^$i" $strapdir/etc/inittab && continue
+		print "$i" | sudo tee -a $strapdir/etc/inittab >/dev/null
+	done || true
+
+	for i in $custmodules; do
+		grep -q "^$i" $strapdir/etc/modules && continue
+		print "$i" | sudo tee -a $strapdir/etc/modules >/dev/null
+	done || true
+
+	[[ -n "$TAR_STAGE4" ]] && bootstrap_tar_pack "$bootstrap_tgz_stage4" || true
+}
