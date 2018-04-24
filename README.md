@@ -1,9 +1,8 @@
-heads' build system
-===================
+build system of the "heads" distro (fork)
+=========================================
 
-initial setup
--------------
-
+1
+_
 clone the git repository with
 
 ```
