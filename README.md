@@ -4,7 +4,7 @@
 
 to build your own Linux distro
 ==============================
-please clone the git repository typing in bash:
+please clone the git repository by typing in a bash shell:
 
 ```
 git clone https://github.com/headslive/build-system.git --recursive
