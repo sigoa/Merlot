@@ -2,9 +2,9 @@
 
 ***
 
-to build your own "heads" distro
-================================
-clone the git repository with
+to build your own Linux distro
+==============================
+please clone the git repository typing in bash:
 
 ```
 git clone https://github.com/headslive/build-system.git --recursive
