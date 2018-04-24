@@ -8,6 +8,6 @@ Bottled GNU/Linux for connaisseurs only.
 
 bottle ingredients: 
  * GR-security kernel
- * JWM option
- * debian packaging
- * TOR traffic only
+ * TOR network traffic only
+ * JWM option and OpenBox
+ * debian packaging: Devuan without SystemD
