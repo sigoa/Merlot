@@ -10,6 +10,6 @@ git clone https://github.com/headslive/build-system.git --recursive
 then
 ----
 
-go to the `live-sdk` directory and use as it is normally intended to.
+go to the `live-sdk` directory and modify stuff.
 
 see [live-sdk documentation](https://git.devuan.org/sdk/live-sdk).
