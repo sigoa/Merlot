@@ -1,5 +1,5 @@
-build system of the "heads" distro (fork)
-=========================================
+build system of the "heads" distro
+==================================
 clone the git repository with
 
 ```
@@ -11,4 +11,5 @@ building
 --------
 
 go to the `live-sdk` directory and use as it is normally intended to.
+
 see [live-sdk documentation](https://git.devuan.org/sdk/live-sdk).
