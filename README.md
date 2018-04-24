@@ -6,6 +6,9 @@ Bottled GNU/Linux for connaisseurs only.
 
 ***
 
+Pour yourself a tasty Linux in just an hour.
+***
+
 bottle ingredients: 
  * GR-security kernel
  * TOR network traffic only
