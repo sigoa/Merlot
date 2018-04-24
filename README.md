@@ -2,7 +2,7 @@
 
 ***
 
-Bottled GNU/Linux for connaisseurs only.
+Bottled GNU/Linux for connaisseurs only
 
 ***
 
@@ -15,4 +15,4 @@ bottle ingredients:
  * GR-security kernel
  * TOR network traffic only (opt-out is possible)
  * JWM option and OpenBox window managers
- * nice menu for everything, set own root password on the first sccreen
+ * nice menu for everything, set own root password on the first screen
