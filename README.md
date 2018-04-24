@@ -3,3 +3,11 @@
 ***
 
 Bottled GNU/Linux for connaisseurs only.
+
+***
+
+bottle ingredients: 
+ * GR-security kernel
+ * JWM option
+ * debian packaging
+ * TOR traffic only
