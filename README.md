@@ -1,8 +1,5 @@
 build system of the "heads" distro (fork)
 =========================================
-
-1
-_
 clone the git repository with
 
 ```
