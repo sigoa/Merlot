@@ -1,5 +1,5 @@
-build system of the "heads" distro
-==================================
+to build your own "heads" distro
+================================
 clone the git repository with
 
 ```
@@ -7,8 +7,8 @@ git clone https://github.com/headslive/build-system.git --recursive
 ```
 
 
-building
---------
+then
+----
 
 go to the `live-sdk` directory and use as it is normally intended to.
 
