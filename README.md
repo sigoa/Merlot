@@ -6,7 +6,7 @@ Bottled GNU/Linux for connaisseurs only
 
 ***
 
-Pour yourself a tasty Linux in just an hour (i.e. remaster a modified .ISO) with :
+Pour yourself a fresh Linux in just an hour (i.e. remaster a modified .ISO) with :
 
 ***
 
