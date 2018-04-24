@@ -6,12 +6,13 @@ Bottled GNU/Linux for connaisseurs only.
 
 ***
 
-Pour yourself a tasty Linux in just an hour.
+Pour yourself a tasty Linux in just an hour (i.e. remaster a modified .ISO)
 
 ***
 
 bottle ingredients: 
+ * debian packaging: Devuan distro without the System-D Init-System
  * GR-security kernel
- * TOR network traffic only
- * JWM option and OpenBox
- * debian packaging: Devuan without SystemD
+ * TOR network traffic only (opt-out is possible)
+ * JWM option and OpenBox window managers
+ * nice menu for everything, set own root password on the first sccreen
