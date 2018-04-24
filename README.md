@@ -12,4 +12,4 @@ then
 go to the `live-sdk` directory and modify stuff.
 
 see [live-sdk documentation](https://git.devuan.org/sdk/live-sdk)
-Also [wiki](https://sigoa.github.io/build-system)
+and the [wiki](https://sigoa.github.io/build-system)
