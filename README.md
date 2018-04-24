@@ -6,11 +6,10 @@ Bottled GNU/Linux for connaisseurs only
 
 ***
 
-Pour yourself a tasty Linux in just an hour (i.e. remaster a modified .ISO)
+Pour yourself a tasty Linux in just an hour (i.e. remaster a modified .ISO) with :
 
 ***
 
-bottle ingredients: 
  * debian packaging: Devuan distro without the System-D Init-System
  * GR-security kernel
  * TOR network traffic only (opt-out is possible)
