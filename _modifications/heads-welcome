@@ -1,0 +1,88 @@
+#!/bin/sh
+
+
+#   modded   ....../build-system/live-sdk/tmp/devuan-amd64-build/bootstrap/usr/local/lib/heads/heads-welcome
+
+
+
+
+# Copyright (c) 2016-2018 Ivan J. <parazyd@dyne.org>
+# See LICENSE file for copyright and license details.
+#
+# heads initial setup
+# Inspired by the Tails welcome screen.
+
+rm -f /etc/sudoers.d/heads-welcome
+
+# this subshell adds borders to the windows since this is
+# started before our window manager. uses wmutils.
+( while true; do
+	for i in $(lsw); do
+		chwb -s 2 -c 0x000000 $i
+		sleep 0.1
+	done
+done & )
+
+data="$(yad \
+    --title="/usr/local/lib/heads/heads-welcome !" \
+	--form \
+	--columns=1 \
+	--borders=5 \
+	--center \
+	--width=320 \
+	--height=240 \
+	--fixed \
+	--no-escape \
+	--separator=":" \
+	--button="Shutdown":1 \
+	--button="<b>Start heads</b>":0 \
+	--field="Select a keyboard layout!preferences-desktop-keyboard-symbolic":FBTN \
+	--field="Set the computer language (locale)!preferences-desktop-locale-symbolic":FBTN \
+	--field="Set the timezone!preferences-system-time-symbolic":FBTN \
+	--field="Change the root password!system-users-symbolic":FBTN \
+	--field="":LBL \
+	--field="Randomize MAC addresses of network interfaces":CHK \
+	--field="do not shutdown when unplugging the USB medium":CHK \
+	"/usr/local/lib/heads/heads-keymap" \
+	"/usr/local/lib/heads/heads-locale" \
+	"/usr/local/lib/heads/heads-tz" \
+	"/usr/local/lib/heads/heads-rootpw" \
+	"n/a" \
+	"n/a" \
+	"TRUE" \
+	"FALSE")"
+
+# Shut down on unsuccessful exit.
+[ $? = 0 ] || init 0
+
+# $data:
+# 0: layout
+# 1: locale
+# 2: timezone
+# 3: rootpw
+# 4: n/a
+# 5: n/a
+# 6: macaddr
+# 7: permakey
+i=-1
+echo "$data" | tr ':' '\n' | while read val; do
+	i=$(( $i + 1 ))
+	case "$i" in
+		6)
+			[ "$val" = TRUE ] || continue
+			cp -f /usr/local/share/heads/wicd-preconn \
+				/etc/wicd/scripts/preconnect/macchange
+			chmod 755 /etc/wicd/scripts/preconnect/macchange
+			;;
+		7)
+			[ "$val" = TRUE ] || continue
+			lsmod | grep -q permakey && rmmod permakey || true
+			;;
+		*)
+			continue
+			;;
+	esac
+done
+
+# here we kill it because of the subshell
+pgrep heads-welcome | xargs kill
