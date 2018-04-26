@@ -14,5 +14,5 @@ Pour yourself a fresh Linux in just an hour (i.e. remaster a modified .ISO) with
  * debian packaging: Devuan distro without the System-D Init-System
  * GR-security kernel
  * TOR network traffic only (opt-out is possible)
- * JWM option and OpenBox window managers
+ * JWM option and [OpenBox](https://wiki.archlinux.org/index.php/Openbox) window managers
  * nice menu for everything, set own root password on the first screen
